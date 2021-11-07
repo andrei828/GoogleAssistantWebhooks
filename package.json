@@ -1,0 +1,24 @@
+{
+  "name": "googleassistantwebhooks",
+  "version": "1.0.0",
+  "description": "Basic endpoints to play around with Google Assistant",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/andrei828/GoogleAssistantWebhooks.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/andrei828/GoogleAssistantWebhooks/issues"
+  },
+  "homepage": "https://github.com/andrei828/GoogleAssistantWebhooks#readme",
+  "dependencies": {
+    "@assistant/conversation": "^3.8.1",
+    "body-parser": "^1.19.0",
+    "express": "^4.17.1"
+  }
+}
