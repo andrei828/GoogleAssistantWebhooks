@@ -11,8 +11,13 @@ class OrderService {
     this.orders[sessionID] = order
   }
 
-  sendOrder(sessionID) {
-    this.orders[sessionID].send()
+  async sendOrder(sessionID) {
+    await this.orders[sessionID].send()
+    delete this.orders[sessionID]
+  }
+
+  cancelOrder(sessionID) {
+    delete this.orders[sessionID]
   }
 }
   

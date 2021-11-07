@@ -2,6 +2,7 @@ const {
   conversation,
   Image,
   List,
+  Suggestion,
 } = require('@assistant/conversation')
 
 const OrderService = require('../services/OrderService')
@@ -24,14 +25,23 @@ app.handle('Option', conv => {
 
   orderService.addNewOrder(selectedOption, sessionID)
   conv.add(`You selected ${selectedOption}. Would you like me to add it to the cart?`)
+  conv.add(new Suggestion({ title: "Yes"}))
+  conv.add(new Suggestion({ title: "No"}))
 });
 
-app.handle('Yes', conv => {
+app.handle('Yes', async conv => {
   const sessionID = conv.request.session.id
   const selectedOption = conv.request.scene.slots.type_option.value
 
-  orderService.sendOrder(sessionID)
+  await orderService.sendOrder(sessionID)
   conv.add(`Ok, I have added ${selectedOption} to the cart`)
+});
+
+app.handle('No', async conv => {
+  const sessionID = conv.request.session.id
+
+  await orderService.sendOrder(sessionID)
+  conv.add(`Ok, I have cancelled the order`)
 });
 
 app.handle('ProductList', conv => {

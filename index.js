@@ -4,5 +4,5 @@ const app = require('./handlers/assistantConversationHandlers')
 
 // Express.js linking
 const expressApp = express().use(bodyParser.json())
-expressApp.post('/fulfillment', app)
+expressApp.post('/assistant', app)
 expressApp.listen(8080)
