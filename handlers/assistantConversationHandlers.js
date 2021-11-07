@@ -29,18 +29,18 @@ app.handle('Option', conv => {
   conv.add(new Suggestion({ title: "No"}))
 });
 
-app.handle('Yes', async conv => {
+app.handle('Yes', conv => {
   const sessionID = conv.request.session.id
   const selectedOption = conv.request.scene.slots.type_option.value
 
-  await orderService.sendOrder(sessionID)
+  orderService.sendOrder(sessionID)
   conv.add(`Ok, I have added ${selectedOption} to the cart`)
 });
 
-app.handle('No', async conv => {
+app.handle('No', conv => {
   const sessionID = conv.request.session.id
 
-  await orderService.sendOrder(sessionID)
+  orderService.sendOrder(sessionID)
   conv.add(`Ok, I have cancelled the order`)
 });
 
