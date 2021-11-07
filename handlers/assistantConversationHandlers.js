@@ -25,8 +25,8 @@ app.handle('Option', conv => {
 
   orderService.addNewOrder(selectedOption, sessionID)
   conv.add(`You selected ${selectedOption}. Would you like me to add it to the cart?`)
-  conv.add(new Suggestion({ title: "Yes"}))
-  conv.add(new Suggestion({ title: "No"}))
+  conv.add(new Suggestion({ title: 'Yes'}))
+  conv.add(new Suggestion({ title: 'No'}))
 });
 
 app.handle('Yes', conv => {
