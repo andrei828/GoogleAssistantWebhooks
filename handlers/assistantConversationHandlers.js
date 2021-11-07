@@ -49,7 +49,7 @@ app.handle('ProductList', conv => {
   // Define prompt content using keys
   conv.add(new List({
     title: 'List of items',
-    items: productService.getProductList().map(product => { key: product.name })
+    items: productService.getProductList().map(product => { return { key: product.name } })
   }));
 });
 
