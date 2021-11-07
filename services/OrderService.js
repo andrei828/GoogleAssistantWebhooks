@@ -1,7 +1,5 @@
 const Order = require('../models/Order')
-const Item = require('../models/Product')
-const Logger = require('./Logger')
-const logger = new Logger()
+const Product = require('../models/Product')
 
 class OrderService {
   constructor() {
@@ -9,18 +7,13 @@ class OrderService {
   }
 
   addNewOrder(name, sessionID) {
-    const order = new Order(new Item(name))
+    const order = new Order(new Product(name))
     this.orders[sessionID] = order
-  }
-
-  confirmOrder(sessionID) {
-    this.orders[sessionID].confirm()
   }
 
   sendOrder(sessionID) {
     this.orders[sessionID].send()
   }
-
 }
   
 module.exports = OrderService;
