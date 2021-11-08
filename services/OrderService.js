@@ -1,13 +1,12 @@
 const Order = require('../models/Order')
-const Product = require('../models/Product')
 
 class OrderService {
   constructor() {
     this.orders = {}
   }
 
-  addNewOrder(name, sessionID) {
-    const order = new Order(new Product(name))
+  addNewOrder(product, sessionID) {
+    const order = new Order(product)
     this.orders[sessionID] = order
   }
 

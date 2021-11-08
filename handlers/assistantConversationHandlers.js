@@ -1,6 +1,5 @@
 const {
   conversation,
-  Image,
   List,
   Suggestion,
 } = require('@assistant/conversation')
@@ -15,15 +14,13 @@ const productService = new ProductService()
 const app = conversation()
 
 // Google Assistant handlers
-app.handle('Response', conv => {
-  console.log(conv)
-});
-
 app.handle('Option', conv => {
   const sessionID = conv.request.session.id
   const selectedOption = conv.request.scene.slots.type_option.value
 
-  orderService.addNewOrder(selectedOption, sessionID)
+  const selectedProduct = productService.getProduct(selectedOption)
+  orderService.addNewOrder(selectedProduct, sessionID)
+  
   conv.add(`You selected ${selectedOption}. Would you like me to add it to the cart?`)
   conv.add(new Suggestion({ title: 'Yes'}))
   conv.add(new Suggestion({ title: 'No'}))
@@ -40,7 +37,7 @@ app.handle('Yes', conv => {
 app.handle('No', conv => {
   const sessionID = conv.request.session.id
 
-  orderService.sendOrder(sessionID)
+  orderService.cancelOrder(sessionID)
   conv.add(`Ok, I have cancelled the order`)
 });
 

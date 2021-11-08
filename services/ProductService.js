@@ -8,6 +8,15 @@ class ProductService {
   getProductList() {
     return this.productRepository.getProductList()
   }
+
+  getProduct(name) {
+    this.productRepository.getProductList().forEach(product => {
+      if (product.name === name) {
+        return product
+      }
+    })
+    return null
+  }
 }
   
 module.exports = ProductService;
