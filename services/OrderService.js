@@ -5,8 +5,8 @@ class OrderService {
     this.orders = {}
   }
 
-  addNewOrder(product, sessionID) {
-    const order = new Order(product)
+  addNewOrder(product, quantity, sessionID) {
+    const order = new Order(product, quantity)
     this.orders[sessionID] = order
   }
 

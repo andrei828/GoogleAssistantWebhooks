@@ -10,11 +10,11 @@ class ProductService {
   }
 
   getProduct(name) {
-    this.productRepository.getProductList().forEach(product => {
+    for (var product of this.productRepository.getProductList()) {
       if (product.name === name) {
         return product
       }
-    })
+    }
     return null
   }
 }

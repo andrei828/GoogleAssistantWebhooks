@@ -4,13 +4,14 @@ const Logger = require('../services/Logger')
 const logger = new Logger()
 
 class Order {
-  constructor(item) {
+  constructor(item, quantity) {
     this.item = item
+    this.quantity = quantity
   }
 
   async send() {
     const timestamp = new Date().toISOString();
-    await fs.appendFile('orders.txt', `${timestamp}: Ordered ${this.item.name}!` + os.EOL, () => {
+    await fs.appendFile('orders.txt', `${timestamp}: Ordered ${this.item.name}. Quantity: ${this.quantity}` + os.EOL, () => {
       logger.log('Successfully placed the order!')
     })
   }

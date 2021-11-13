@@ -14,27 +14,28 @@ const productService = new ProductService()
 const app = conversation()
 
 // Google Assistant handlers
-app.handle('Option', conv => {
+app.handle('UserOption', conv => {
   const sessionID = conv.request.session.id
-  const selectedOption = conv.request.scene.slots.type_option.value
+  const selectedOption = conv.request.scene.slots.druglist.value
+  const selectedQuantity = conv.request.session.params.quantity
 
   const selectedProduct = productService.getProduct(selectedOption)
-  orderService.addNewOrder(selectedProduct, sessionID)
+  orderService.addNewOrder(selectedProduct, selectedQuantity, sessionID)
   
   conv.add(`You selected ${selectedOption}. Would you like me to add it to the cart?`)
   conv.add(new Suggestion({ title: 'Yes'}))
   conv.add(new Suggestion({ title: 'No'}))
 });
 
-app.handle('Yes', conv => {
+app.handle('ConfirmOrderWebhook', conv => {
   const sessionID = conv.request.session.id
-  const selectedOption = conv.request.scene.slots.type_option.value
+  const selectedOption = conv.request.scene.slots.druglist.value
 
   orderService.sendOrder(sessionID)
   conv.add(`Ok, I have added ${selectedOption} to the cart`)
 });
 
-app.handle('No', conv => {
+app.handle('CancelOrderWebhook', conv => {
   const sessionID = conv.request.session.id
 
   orderService.cancelOrder(sessionID)
@@ -42,11 +43,11 @@ app.handle('No', conv => {
 });
 
 app.handle('ProductList', conv => {
-  conv.add('Which one?');
+  conv.add('Choose from the options displayed below');
   
   // Override type based on slot 'prompt_option'
   conv.session.typeOverrides = [{
-    name: 'prompt_option',
+    name: 'DrugList',
     mode: 'TYPE_REPLACE',
     synonym: {
       entries: productService.getProductList()
