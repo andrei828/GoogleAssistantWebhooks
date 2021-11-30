@@ -1,8 +1,8 @@
 const Order = require('../models/Order')
 
 class OrderService {
-  constructor() {
-    this.orders = {}
+  constructor(storageService) {
+    this._storageService = storageService
   }
 
   addNewOrder(product, quantity, sessionID) {
