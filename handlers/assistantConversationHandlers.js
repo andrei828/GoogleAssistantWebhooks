@@ -6,9 +6,14 @@ const {
 
 const OrderService = require('../services/OrderService')
 const ProductService = require('../services/ProductService')
+const StorageService = require('../services/StorageService')
+const SessionService = require('../services/SessionService')
 
-const orderService = new OrderService()
+const storageService = new StorageService()
+const sessionService = new SessionService(storageService)
 const productService = new ProductService()
+const orderService = new OrderService()
+
 
 // Create an app instance
 const app = conversation()
@@ -22,9 +27,13 @@ app.handle('UserOption', conv => {
   const selectedProduct = productService.getProduct(selectedOption)
   orderService.addNewOrder(selectedProduct, selectedQuantity, sessionID)
   
-  conv.add(`You selected ${selectedOption}. Would you like me to add it to the cart?`)
-  conv.add(new Suggestion({ title: 'Yes'}))
-  conv.add(new Suggestion({ title: 'No'}))
+  // conv.add(`You selected ${selectedOption}. Would you like me to add it to the cart?`)
+  // conv.add(new Suggestion({ title: 'Yes'}))
+  // conv.add(new Suggestion({ title: 'No'}))
+
+  conv.add(`Sie haben ${selectedOption} ausgewählt. Möchten Sie es in den Warenkorb hinzufügen?`)
+  conv.add(new Suggestion({ title: 'Ja'}))
+  conv.add(new Suggestion({ title: 'Nein'}))
 });
 
 app.handle('ConfirmOrderWebhook', conv => {
@@ -32,19 +41,22 @@ app.handle('ConfirmOrderWebhook', conv => {
   const selectedOption = conv.request.scene.slots.druglist.value
 
   orderService.sendOrder(sessionID)
-  conv.add(`Ok, I have added ${selectedOption} to the cart`)
+  // conv.add(`Ok, I have added ${selectedOption} to the cart`)
+  conv.add(`Ich habe ${selectedOption} an dem Korb hinzugefügt`)
 });
 
 app.handle('CancelOrderWebhook', conv => {
   const sessionID = conv.request.session.id
 
   orderService.cancelOrder(sessionID)
-  conv.add(`Ok, I have cancelled the order`)
+  //conv.add(`Ok, I have cancelled the order`)
+  conv.add(`Ich habe die Bestellung abgesagt`)
 });
 
 app.handle('ProductList', conv => {
-  conv.add('Choose from the options displayed below');
-  
+  // conv.add('Choose from the options displayed below')
+  conv.add('Wählen Sie aus den unten angezeigten Möglichkeiten')
+
   // Override type based on slot 'prompt_option'
   conv.session.typeOverrides = [{
     name: 'DrugList',
@@ -56,7 +68,7 @@ app.handle('ProductList', conv => {
   
   // Define prompt content using keys
   conv.add(new List({
-    title: 'List of items',
+    title: 'Liste',//'List of items',
     items: productService.getProductList().map(product => { return { key: product.name } })
   }));
 });

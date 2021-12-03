@@ -15,13 +15,16 @@ class StorageService {
   constructor() {
   }
 
+  /*
+  Client queries region
+  */
   async getCartsByClient(client) {
     try {
       const carts = db.collection(client.id)
       const snapshot = await carts.get()
       return snapshot.map(doc => {
-          const data = doc.data()
-          return new Cart(client.id, data.orders, data.status)   
+        const data = doc.data()
+        return new Cart(client.id, data.orders, data.status)   
       })
     } catch (e) {
       console.log(e)
@@ -134,6 +137,38 @@ class StorageService {
     }
   }
   
+
+  /*
+  Session queries region
+  */
+  async addSessionAndProductDocument(sessionId, product) {
+    try {
+      await db.collection('sessions').add({
+        sessionId: sessionId,
+        product: product
+      })     
+    } catch (e) {
+      console.log(e)
+    }
+  }
+
+  async getProductBySession(sessionId) {
+    try {
+      const citiesRef = db.collection('sessions');
+      const snapshot = await citiesRef.where('sessionId', '==', sessionId).get();
+      if (snapshot.empty) {
+        console.log(`No matching documents with sessionId=${sessionId}`);
+        return;
+      }  
+
+      snapshot.forEach(doc => {
+        const data = doc.data()
+        return data.product
+      });
+    } catch (e) {
+      console.log(e)
+    }
+  }
 }
   
 module.exports = StorageService;
