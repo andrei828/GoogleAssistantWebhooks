@@ -1,16 +1,16 @@
 const ProductRepository = require('../repositories/ProductRepository')
 
 class ProductService {
-  constructor() {
-    this.productRepository = new ProductRepository()
+  constructor(storageService) {
+    this._productRepository = new ProductRepository(storageService)
   }
 
   getProductList() {
-    return this.productRepository.getProductList()
+    return this._productRepository.getProductList()
   }
 
   getProduct(name) {
-    for (var product of this.productRepository.getProductList()) {
+    for (var product of this._productRepository.getProductList()) {
       if (product.name === name) {
         return product
       }

@@ -141,18 +141,18 @@ class StorageService {
   /*
   Session queries region
   */
-  async addSessionAndProductDocument(sessionId, product) {
+  async addSessionAndOrderDocument(sessionId, item) {
     try {
       await db.collection('sessions').add({
         sessionId: sessionId,
-        product: product
+        item: item
       })     
     } catch (e) {
       console.log(e)
     }
   }
 
-  async getProductBySession(sessionId) {
+  async getOrderBySession(sessionId) {
     try {
       const citiesRef = db.collection('sessions');
       const snapshot = await citiesRef.where('sessionId', '==', sessionId).get();
@@ -163,11 +163,19 @@ class StorageService {
 
       snapshot.forEach(doc => {
         const data = doc.data()
-        return data.product
+        return data.item
       });
     } catch (e) {
       console.log(e)
     }
+  }
+
+  async deleteSession(sessionId) {
+    try {
+      await db.collection('sessions').where('sessionId', '==', sessionId).delete();
+    } catch (e) {
+      console.log(e)
+    } 
   }
 }
   

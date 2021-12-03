@@ -1,13 +1,13 @@
 const express = require('express')
 const bodyParser = require('body-parser')
-// const app = require('./handlers/assistantConversationHandlers')
+const app = require('./handlers/assistantConversationHandlers')
 
 
 
 
 // Express.js linking
 const expressApp = express().use(bodyParser.json())
-// expressApp.post('/assistant', app)
+expressApp.post('/assistant', app)
 
 expressApp.get('/', async function (req, res) {
     const Cart = require('./models/Cart')
@@ -16,14 +16,6 @@ expressApp.get('/', async function (req, res) {
         const storageService = new StorageService()
         await storageService.getLatestCart(new Client("lab1"))
   })
-// (async () => {
-//     try {
-        
-//     } catch (e) {
-//         console.log(e)
-//         // Deal with the fact the chain failed
-//     }
-// })();
 
 
 

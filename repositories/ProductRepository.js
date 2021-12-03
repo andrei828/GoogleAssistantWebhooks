@@ -2,6 +2,10 @@ const Product = require('../models/Product')
 
 class ProductRepository {
   
+  constructor(storageService) {
+    this._storageService = storageService
+  }
+
   getProductList() {
     return [
       // new Product("Product1", { title: "Product1", description: "product description placeholder" }),

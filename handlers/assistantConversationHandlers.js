@@ -11,8 +11,8 @@ const SessionService = require('../services/SessionService')
 
 const storageService = new StorageService()
 const sessionService = new SessionService(storageService)
-const productService = new ProductService()
-const orderService = new OrderService()
+const productService = new ProductService(storageService)
+const orderService = new OrderService(storageService, sessionService)
 
 
 // Create an app instance
