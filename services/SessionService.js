@@ -1,3 +1,6 @@
+// Currently not using this service because 
+// we can store session variables for free 
+// inside the conversation json from Google Assistant.
 class SessionService {
   constructor(logger, storageService) {
     this._logger = logger

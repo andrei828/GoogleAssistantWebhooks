@@ -1,8 +1,9 @@
 class Product {
-  constructor(name, display, synonyms=[]) {
+  constructor(name, supplier, matchCode, UoM) {
     this.name = name
-    this.display = display // has a title, description and possibly an image url
-    this.synonyms = synonyms
+    this.supplier = supplier
+    this.matchCode = matchCode
+    this.UoM = UoM
   }
 }
   

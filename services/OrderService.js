@@ -7,31 +7,22 @@ class OrderService {
     this._sessionService = sessionService
   }
 
-  async addNewOrder(sessionId, product, quantity, unit) {
+  async addNewOrder(clientId, product, quantity, unit) {
     const order = new Order(product, quantity, unit)
-    await this._sessionService.mapProductToSession(sessionId, order)
+    this._logger.info("Created the object: ", JSON.stringify(order, null, 2))
+    await this._storageService.addOrderToCart(clientId, order)
   }
 
-  async commitOrder(sessionId, cart) {
-    const order = await this._sessionService.getOrderBySession(sessionId)
-    await this.storageService.addOrderToCart(cart, order)
-    await this._sessionService.deleteSession(sessionID)
+  async removeLastOrder(clientId) {
+    const order = await this._storageService.getLatestOrderFromLatestCart(clientId)
+    this._logger.info("Found this object in the database: ", JSON.stringify(order, null, 2))
+    await this._storageService.removeOrderFromCart(clientId, order)
   }
 
   async cancelOrder(sessionId) {
     await this._sessionService.deleteSession(sessionId)
   }
-
-  async removeLastOrder(sessionId) {
-    const order = await this._storageService.getLatestCartContent(cart)
-    await this._sessionService.mapProductToSession(sessionId, order)
-  }
-
-  async commitOrderRemoval(sessionId) {
-    const order = await this._sessionService.getOrderBySession(sessionId)
-    await this._storageService.removeOrderFromCart(cart, order)
-    await this._sessionService.deleteSession(sessionID)
-  }
+  
 }
   
 module.exports = OrderService;

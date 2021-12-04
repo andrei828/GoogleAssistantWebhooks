@@ -19,9 +19,9 @@ class CartService {
     await this._sessionService.deleteSession(sessionID)
   }
 
-  async getOrdersFromLatestCart() [
-    const orders = await._storageService.
-  ]
+  async getOrdersFromLatestCart() {
+    // const orders = await._storageService.
+  }
 }
   
 module.exports = CartService;

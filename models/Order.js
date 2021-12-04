@@ -1,12 +1,13 @@
 const fs = require('fs')
 const os = require("os")
-const { database } = require('firebase-admin')
+const admin = require('firebase-admin')
+
 class Order {
   constructor(item, quantity, unit, timestamp=null) {
     this.item = item
     this.unit = unit
     this.quantity = quantity
-    this.timestamp = (timestamp === null) ? database.ServerValue.TIMESTAMP : timestamp
+    this.timestamp = (timestamp === null) ? admin.firestore.Timestamp.now() : timestamp
   }
 
   async send() {

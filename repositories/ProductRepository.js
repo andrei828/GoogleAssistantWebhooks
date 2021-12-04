@@ -34,6 +34,13 @@ class ProductRepository {
     ]
   }
 
+  async getProducts() {
+    return await this._storageService.getAllProducts()
+  }
+
+  async getProductsByMatchCode(matchCode) {
+    return await this._storageService.getProductsByMatchCode(matchCode)
+  }
 }
   
 module.exports = ProductRepository;
