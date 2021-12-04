@@ -1,4 +1,5 @@
 const { database } = require('firebase-admin')
+const CartStatus = require('./CartStatus')
 
 class Cart {
   constructor(id, clientId, orders=[], status=CartStatus.Open, timestamp=null) {
@@ -9,10 +10,5 @@ class Cart {
     this.timestamp = (timestamp === null) ? database.ServerValue.TIMESTAMP : timestamp
   }
 }
-
-// Open    - Free to add items
-// Pending - Closed has been sent to the seller
-// Closed  - Orders from the cart have been served
-const CartStatus = Object.freeze({"Open": 1, "Pending": 2, "Closed": 3,})
     
 module.exports = Cart;

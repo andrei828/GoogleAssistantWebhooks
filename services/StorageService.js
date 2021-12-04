@@ -7,12 +7,14 @@ const { initializeApp, applicationDefault, cert } = require('firebase-admin/lib/
 const { getFirestore, FieldValue } = require('firebase-admin/lib/firestore')
 
 const serviceAccount = require('../confidentialdata.json')
+const CartStatus = require('../models/CartStatus')
 initializeApp({ credential: cert(serviceAccount) })
 
 const db = getFirestore();
 
 class StorageService {
-  constructor() {
+  constructor(logger) {
+    this._logger = logger
   }
 
   /*
@@ -33,12 +35,16 @@ class StorageService {
 
   async getLatestCart(client) {
     try {
+      let result = null
       const carts = db.collection(client.id)
       const snapshot = await carts.orderBy('created', 'desc').limit(1).get()
       snapshot.forEach(doc => {
-          const data = doc.data()
-          return new Cart(client.id, data.orders, data.status)
+        const data = doc.data()
+        result = new Cart(doc.id, client.id, data.orders, data.status)
+        return
       })
+      return result
+
     } catch (e) {
       console.log(e)
     }
@@ -46,12 +52,15 @@ class StorageService {
 
   async getAllProducts() {
     try {
-      const products = db.collection('products')
+      let result = []
+      const products = db.collection('productsDe')
       const snapshot = await products.get()
-      return snapshot.map(doc => {
-          const data = doc.data()
-          return new Product(data.name, data.display, data.synonyms)
+      snapshot.forEach(doc => {
+        const data = doc.data()
+        result.push(new Product(data.name, data.display, data.synonyms))
       })
+      return result
+      
     } catch (e) {
       console.log(e)
     }
@@ -68,7 +77,7 @@ class StorageService {
         if (orders.length === 0) {
           return null
         } else if (orders.length > 1) {
-          orders.sort((a, b) => a.created.localeCompare(b.created));
+          orders.sort((a, b) => a.created.localeCompare(b.created))
         }
         return orders[0]
       }
@@ -94,14 +103,25 @@ class StorageService {
     }
   }
 
-  async addNewCart(newCart) {
+  async addNewCart(clientId, newCart) {
     try {
-      const cartDoc = db.collection(newCart.clientId).doc(newCart.id);
+      const cartDoc = db.collection(clientId).doc(newCart.id);
       await cartDoc.set({
         created: newCart.timestamp,
         orders: newCart.orders,
         status: newCart.status
       })     
+    } catch (e) {
+      console.log(e)
+    }
+  }
+
+  async closeCurrentCart(clientId) {
+    try {
+      const cartDoc = db.collection(clientId).where('status', '==', CartStatus.Open);
+      await cartDoc.update({
+        status: CartStatus.Closed
+      }, { merge: true })    
     } catch (e) {
       console.log(e)
     }
@@ -120,7 +140,7 @@ class StorageService {
       const cartDoc = db.collection(cart.clientId).doc(cart.id);
       await cartDoc.update({
         orders: FieldValue.arrayUnion(order)
-      })     
+      }, { merge: true })     
     } catch (e) {
       console.log(e)
     }
@@ -131,7 +151,7 @@ class StorageService {
       const cartDoc = db.collection(cart.clientId).doc(cart.id);
       await cartDoc.update({
         orders: FieldValue.arrayRemove(order)
-      })     
+      }, { merge: true })     
     } catch (e) {
       console.log(e)
     }

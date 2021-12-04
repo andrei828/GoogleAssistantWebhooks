@@ -1,7 +1,8 @@
 const ProductRepository = require('../repositories/ProductRepository')
 
 class ProductService {
-  constructor(storageService) {
+  constructor(logger, storageService) {
+    this._logger = logger
     this._productRepository = new ProductRepository(storageService)
   }
 
@@ -16,6 +17,10 @@ class ProductService {
       }
     }
     return null
+  }
+
+  async getProducts() {
+    return await this._productRepository.getProducts()
   }
 }
   

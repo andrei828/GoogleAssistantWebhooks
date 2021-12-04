@@ -1,5 +1,6 @@
 class SessionService {
-  constructor(storageService) {
+  constructor(logger, storageService) {
+    this._logger = logger
     this._storageService = storageService
   }
 

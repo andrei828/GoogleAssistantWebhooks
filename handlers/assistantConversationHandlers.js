@@ -4,15 +4,19 @@ const {
   Suggestion,
 } = require('@assistant/conversation')
 
+const Logger = require('../services/Logger')
+const CartService = require('../services/CartService')
 const OrderService = require('../services/OrderService')
 const ProductService = require('../services/ProductService')
 const StorageService = require('../services/StorageService')
 const SessionService = require('../services/SessionService')
 
-const storageService = new StorageService()
-const sessionService = new SessionService(storageService)
-const productService = new ProductService(storageService)
-const orderService = new OrderService(storageService, sessionService)
+const logger = new Logger()
+const storageService = new StorageService(logger)
+const sessionService = new SessionService(logger, storageService)
+const productService = new ProductService(logger, storageService)
+const cartService = new CartService(logger, storageService, sessionService)
+const orderService = new OrderService(logger, storageService, sessionService)
 
 
 // Create an app instance

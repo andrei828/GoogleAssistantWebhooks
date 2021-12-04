@@ -1,23 +1,10 @@
 const Order = require('../models/Order')
 
 class OrderService {
-  constructor(storageService, sessionService) {
+  constructor(logger, storageService, sessionService) {
+    this._logger = logger
     this._storageService = storageService
     this._sessionService = sessionService
-  }
-
-  addNewOrder(product, quantity, sessionID) {
-    const order = new Order(product, quantity)
-    this.orders[sessionID] = order
-  }
-
-  async sendOrder(sessionID) {
-    await this.orders[sessionID].send()
-    delete this.orders[sessionID]
-  }
-
-  cancelOrder(sessionID) {
-    delete this.orders[sessionID]
   }
 
   async addNewOrder(sessionId, product, quantity, unit) {
@@ -33,6 +20,17 @@ class OrderService {
 
   async cancelOrder(sessionId) {
     await this._sessionService.deleteSession(sessionId)
+  }
+
+  async removeLastOrder(sessionId) {
+    const order = await this._storageService.getLatestCartContent(cart)
+    await this._sessionService.mapProductToSession(sessionId, order)
+  }
+
+  async commitOrderRemoval(sessionId) {
+    const order = await this._sessionService.getOrderBySession(sessionId)
+    await this._storageService.removeOrderFromCart(cart, order)
+    await this._sessionService.deleteSession(sessionID)
   }
 }
   
