@@ -19,8 +19,12 @@ class CartService {
     await this._sessionService.deleteSession(sessionID)
   }
 
-  async getOrdersFromLatestCart() {
-    // const orders = await._storageService.
+  async getOrdersFromLatestCart(clientId) {
+    return await this._storageService.getLatestCartContent(clientId)
+  }
+
+  async getOrdersFromLatestCartByMatchCode(clientId, matchCode) {
+    return await this._storageService.getOrdersFromLatestCartByMatchCode(clientId, matchCode)
   }
 }
   

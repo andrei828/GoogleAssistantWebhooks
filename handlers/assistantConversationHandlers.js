@@ -1,9 +1,9 @@
 const {
   conversation,
   List,
+  Table,
   Suggestion,
 } = require('@assistant/conversation')
-
 
 const Logger = require('../services/Logger')
 const CartService = require('../services/CartService')
@@ -13,6 +13,8 @@ const StorageService = require('../services/StorageService')
 const SessionService = require('../services/SessionService')
 const ConversationParser = require('../utils/ConversationParser')
 
+const DEUTSCH = "de"
+const ENGLISH = "en"
 const logger = new Logger()
 const conversationParser = new ConversationParser()
 const storageService = new StorageService(logger)
@@ -21,79 +23,216 @@ const productService = new ProductService(logger, storageService)
 const cartService = new CartService(logger, storageService, sessionService)
 const orderService = new OrderService(logger, storageService, sessionService)
 
-
 // Create an app instance
 const app = conversation()
 
 // Google Assistant handlers
-app.handle('RemoveLatestOrderFromCart', async conv => {
+app.handle('GetOrdersFromCart', async conv => {
   const clientId = conversationParser.getClientId(conv)
-  await orderService.removeLastOrder(clientId)
-  conv.add(`Do you want me to remove ${selectedOption} from your cart?`)
-  conv.add(new Suggestion({ title: 'Yes'}))
-  conv.add(new Suggestion({ title: 'No'}))
+  const orders = await cartService.getOrdersFromLatestCart(clientId)
+  const language = conversationParser.getLanguage(conv)
+
+  let listTitle = 'Orders'
+  let listSubtitle = 'What you ordered this month'
+  let orderNameHeader = 'Item name'
+  let orderQuantityHeader = 'Quantity'
+
+  if (language === DEUTSCH) {
+    listTitle = 'Bestellungen'
+    listSubtitle = 'Was haben Sie diese Monat bestellt'
+    orderNameHeader = 'Name'
+    orderQuantityHeader = 'Quantität'
+  }
+
+  console.log(JSON.stringify(orders.map((order, index) => {
+    return {
+      cells: [{
+        text: `${index + 1}) ${order.item}`
+      },{
+        text: `${order.quantity} ${order.unit}`
+      }]
+    }
+  }), null, 2))
+  conv.add(new Table({
+    'title': listTitle,
+    'subtitle': listSubtitle,
+    'columns': [{
+      'header': orderNameHeader
+    }, {
+      'header': orderQuantityHeader
+    }],
+    'rows': orders.map((order, index) => {
+      return {
+        cells: [{
+          text: `${index + 1}) ${order.item}`
+        },{
+          text: `${order.quantity} ${order.unit}`
+        }]
+      }
+    })
+  }));
 })
 
 app.handle('RemoveLatestOrderFromCart', async conv => {
+  const language = conversationParser.getLanguage(conv)
   const clientId = conversationParser.getClientId(conv)
-  await orderService.removeLastOrder(clientId)
-  conv.add(`Do you want me to remove ${selectedOption} from your cart?`)
-  conv.add(new Suggestion({ title: 'Yes'}))
-  conv.add(new Suggestion({ title: 'No'}))
+  const latestOrder = JSON.parse(conv.session.params.order)
+  await orderService.removeOrderFromLatestCart(clientId, latestOrder)
+
+  if (language == DEUTSCH) {
+    conv.add(`Ich habe ${latestOrder.item} von dem Korb entfernt`)
+  } else {
+    conv.add(`Ok, I have removed ${latestOrder.item} from your cart`)
+  }
+  conv.request.session.params = null
+})
+
+app.handle('GetLatestOrderFromCart', async conv => {
+  const language = conversationParser.getLanguage(conv)
+  const clientId = conversationParser.getClientId(conv)
+  const latestOrder = await orderService.getLatestOrderFromLatestCart(clientId)
+
+  conv.session.params.order = JSON.stringify(latestOrder)
+  if (language === DEUTSCH) {
+    conv.add(`Willst du ${latestOrder.item} von dem Korb entfernen?`)
+    conv.add(new Suggestion({ title: 'Ja'}))
+    conv.add(new Suggestion({ title: 'Nein'}))
+  } else {
+    conv.add(`Do you want me to remove ${latestOrder.item} from your cart?`)
+    conv.add(new Suggestion({ title: 'Yes'}))
+    conv.add(new Suggestion({ title: 'No'}))
+  }
 })
 
 app.handle('CancelRemovalOfLastOrder', async conv => {
-  conv.add(`Ok, I won't remove the item.`)
+  const language = conversationParser.getLanguage(conv)
+  if (language === DEUTSCH) {
+    conv.add(`Ok, I werde es nicht entfernen.`)
+  } else {
+    conv.add(`Ok, I won't remove the item.`)
+  }
   conv.request.session.params = null
 })
 
 app.handle('CancelNewOrder', async conv => {
-  conv.add(`Ok, I have canceled your order.`)
+  const language = conversationParser.getLanguage(conv)
+  if (language === DEUTSCH) {
+    conv.add(`Ok, ich habe die Bestellung abgesagt.`)
+  } else {
+    conv.add(`Ok, I have canceled your order.`)
+  } 
+  conv.request.session.params = null
+})
+
+app.handle('CancelRemoveOrder', async conv => {
+  const language = conversationParser.getLanguage(conv)
+  if (language === DEUTSCH) {
+    conv.add(`Ok, ich habe die Entfernung abgesagt.`)
+  } else {
+    conv.add(`Ok, I have canceled the removal.`)
+  }
   conv.request.session.params = null
 })
 
 app.handle('CommitNewOrder', async conv => {
+  const language = conversationParser.getLanguage(conv)
   const clientId = conversationParser.getClientId(conv)
   const selectedOption = conv.request.scene.slots.ProductName.value
   const selectedQuantity = conv.request.session.params.quantity
   const unitOfMeasurement = conversationParser.getUnitOfMeasurementFromSession(conv, selectedOption)
-  
-  await orderService.addNewOrder(clientId, selectedOption, selectedQuantity, unitOfMeasurement)
-  conv.add(`Ok, I have added ${selectedOption} to the cart`)
-  // conv.add(`Ich habe ${selectedOption} an dem Korb hinzugefügt`)
+  const matchCodeFromSession = conversationParser.getMatchCodeFromSession(conv, selectedOption)
 
+  await orderService.addNewOrder(
+    clientId, selectedOption, selectedQuantity, unitOfMeasurement, matchCodeFromSession
+  )
+
+  if (language === DEUTSCH) {
+    conv.add(`Ich habe ${selectedOption} an dem Korb hinzugefügt`)
+  } else {
+    conv.add(`Ok, I have added ${selectedOption} to the cart`)
+  }
+  conv.request.session.params = null
+})
+
+app.handle('CommitRemoveOrder', async conv => {
+  const language = conversationParser.getLanguage(conv)
+  const clientId = conversationParser.getClientId(conv)
+  const orderToRemove = conv.request.session.params.order
+
+  await orderService.removeOrderFromLatestCart(clientId, orderToRemove)
+
+  if (language === DEUTSCH) {
+    conv.add(`Ich habe ${selectedOption} an dem Korb hinzugefügt`)
+  } else {
+    conv.add(`Ok, I have removed ${orderToRemove.item} from the cart`)
+  }
   conv.request.session.params = null
 })
 
 app.handle('AddOrderProductChosen', async conv => {
+  const language = conversationParser.getLanguage(conv)
   const selectedOption = conv.request.scene.slots.ProductName.value
-  conv.add(`You selected ${selectedOption}. Would you like me to add it to the cart?`)
-  conv.add(new Suggestion({ title: 'Yes'}))
-  conv.add(new Suggestion({ title: 'No'}))
 
-  // conv.add(`Sie haben ${selectedOption} ausgewählt. Möchten Sie es in den Warenkorb hinzufügen?`)
-  // conv.add(new Suggestion({ title: 'Ja'}))
-  // conv.add(new Suggestion({ title: 'Nein'}))
+  if (language === DEUTSCH) {
+    conv.add(`Sie haben ${selectedOption} ausgewählt. Möchten Sie es in den Warenkorb hinzufügen?`)
+    conv.add(new Suggestion({ title: 'Ja'}))
+    conv.add(new Suggestion({ title: 'Nein'}))
+  } else {
+    conv.add(`You selected ${selectedOption}. Would you like me to add it to the cart?`)
+    conv.add(new Suggestion({ title: 'Yes'}))
+    conv.add(new Suggestion({ title: 'No'}))
+  }
+})
+
+app.handle('RemoveOrderProductChosen', async conv => {
+  const language = conversationParser.getLanguage(conv)
+  const selectedOption = conv.request.scene.slots.OrderName.value
+  const order = conversationParser.getOrderByKeyTimestamp(conv, selectedOption)
+
+  if (language === DEUTSCH) {
+    conv.add(`Sie haben ${order.item} ausgewählt. Möchten Sie es von dem Warenkorb entfernen?`)
+    conv.add(new Suggestion({ title: 'Ja'}))
+    conv.add(new Suggestion({ title: 'Nein'}))
+  } else {
+    conv.add(`You selected ${order.item}. Would you like me to remove it to the cart?`)
+    conv.add(new Suggestion({ title: 'Yes'}))
+    conv.add(new Suggestion({ title: 'No'}))
+  }
+  conv.session.params = { order: order }
 })
 
 app.handle('AddOrderListProducts', async conv => {
-  conv.add('Choose from the options displayed below')
-
+  const language = conversationParser.getLanguage(conv)
   const matchCode = conv.request.intent.params.matchCode.resolved
   logger.info(`Match code is ${matchCode}`)
-
-  // conv.add('Wählen Sie aus den unten angezeigten Möglichkeiten')
-  // console.log(JSON.stringify(conv, null, 2))
-  
+  console.log(JSON.stringify(conv, null, 2))
   // Override type based on slot 'prompt_option'
   const products = await productService.getProductsByMatchCode(matchCode)
   logger.info(products)
+
+  if (products.length < 1) {
+    if (language === DEUTSCH) {
+      conv.add(`Es gibt kein ${matchCode} in der Datenbank`)
+    } else {
+      conv.add(`There is no ${matchCode} product in the database`)
+    }
+    return
+  }
+
+  let listTitle = 'List of items'
+  if (language === DEUTSCH) {
+    listTitle = 'Liste'
+    conv.add('Wählen Sie aus den unten angezeigten Möglichkeiten')
+  } else {
+    conv.add('Choose from the options displayed below')
+  }
 
   conv.session.params.quantity = conv.request.intent.params.quantity.resolved
   conv.session.params.options = products.map(product => {
     return {
       key: product.name,
-      unit: product.UoM
+      unit: product.UoM,
+      matchCode: product.matchCode
     }
   })
 
@@ -101,12 +240,15 @@ app.handle('AddOrderListProducts', async conv => {
     name: 'ProductChoice',
     mode: 'TYPE_REPLACE',
     synonym: {
-      entries: products.map(product => {
+      entries: products.map((product, index) => {
         return {
           name: product.name,
           display: {
-            title: product.name,
-            description: `Supplier: ${product.supplier},\nUnit of measurement: ${product.UoM}`
+            title: `${index + 1}) ${product.name}`,
+            description: (language === DEUTSCH) ?
+              `Lieferant: ${product.supplier}, Maßeinheit: ${product.UoM}`
+              :
+              `Supplier: ${product.supplier}, Unit of measurement: ${product.UoM}`
           },
           synonyms: []
         }
@@ -116,70 +258,67 @@ app.handle('AddOrderListProducts', async conv => {
   
   // Define prompt content using keys
   conv.add(new List({
-    title: 'Liste',//'List of items',
+    title: listTitle,
     items: products.map(product => { return { key: product.name } })
   }))
 })
 
-
-
-
-
-
-
-////////////////////////////////////////////////////////////////////////////////////////////////
-app.handle('UserOption', conv => {
-  const sessionID = conv.request.session.id
-  const selectedOption = conv.request.scene.slots.druglist.value
-  const selectedQuantity = conv.request.session.params.quantity
-
-  const selectedProduct = productService.getProduct(selectedOption)
-  orderService.addNewOrder(selectedProduct, selectedQuantity, sessionID)
+app.handle('RemoveOrderListCartContent', async conv => {
+  const language = conversationParser.getLanguage(conv)
+  const matchCode = conv.request.intent.params.productMatchCode.resolved
+  logger.info(`Match code is ${matchCode}`)
   
-  // conv.add(`You selected ${selectedOption}. Would you like me to add it to the cart?`)
-  // conv.add(new Suggestion({ title: 'Yes'}))
-  // conv.add(new Suggestion({ title: 'No'}))
-
-  conv.add(`Sie haben ${selectedOption} ausgewählt. Möchten Sie es in den Warenkorb hinzufügen?`)
-  conv.add(new Suggestion({ title: 'Ja'}))
-  conv.add(new Suggestion({ title: 'Nein'}))
-});
-
-app.handle('ConfirmOrderWebhook', conv => {
-  const sessionID = conv.request.session.id
-  const selectedOption = conv.request.scene.slots.druglist.value
-
-  orderService.sendOrder(sessionID)
-  // conv.add(`Ok, I have added ${selectedOption} to the cart`)
-  conv.add(`Ich habe ${selectedOption} an dem Korb hinzugefügt`)
-});
-
-app.handle('CancelOrderWebhook', conv => {
-  const sessionID = conv.request.session.id
-
-  orderService.cancelOrder(sessionID)
-  //conv.add(`Ok, I have cancelled the order`)
-  conv.add(`Ich habe die Bestellung abgesagt`)
-});
-
-app.handle('ProductList', conv => {
-  // conv.add('Choose from the options displayed below')
-  conv.add('Wählen Sie aus den unten angezeigten Möglichkeiten')
-
   // Override type based on slot 'prompt_option'
+  const clientId = conversationParser.getClientId(conv)
+  const orders = await cartService.getOrdersFromLatestCartByMatchCode(clientId, matchCode)
+  logger.info(orders)
+  
+  if (orders.length < 1) {
+    if (language === DEUTSCH) {
+      conv.add(`Leider gibt es ${matchCode} nicht in dem Korb`)
+    } else {
+      conv.add(`There is no ${matchCode} product in the cart.`)
+    }
+    return
+  }
+
+  let listTitle = 'List of items'
+  if (language === DEUTSCH) {
+    listTitle = 'Liste'
+    conv.add('Wählen Sie aus den unten angezeigten Möglichkeiten')
+  } else {
+    conv.add('Choose from the orders displayed below')
+  }
+
+  conv.session.params.options = orders
   conv.session.typeOverrides = [{
-    name: 'DrugList',
+    name: 'ProductChoice',
     mode: 'TYPE_REPLACE',
     synonym: {
-      entries: productService.getProductList()
+      entries: orders.map((order, index) => {
+        return {
+          name: JSON.stringify({
+            _seconds: order.timestamp._seconds,
+            _nanoseconds: order.timestamp._nanoseconds
+          }),
+          display: {
+            title: `${index + 1}) ${order.item}`,
+            description: (language === DEUTSCH) ?
+              `Quantity: ${order.quantity}, Unit of measurement: ${order.unit}, Created: ${order.timestamp.toDate()}`
+              :
+              `Quantität: ${order.quantity}, Maßeinheit: ${order.unit}, Erstellt: ${order.timestamp.toDate()}`
+          },
+          synonyms: []
+        }
+      })
     }
-  }];
+  }]
   
   // Define prompt content using keys
   conv.add(new List({
-    title: 'Liste',//'List of items',
-    items: productService.getProductList().map(product => { return { key: product.name } })
-  }));
-});
+    title: listTitle,
+    items: orders.map(order => { return { key: JSON.stringify(order.timestamp) } })
+  }))
+})
 
 module.exports = app;
